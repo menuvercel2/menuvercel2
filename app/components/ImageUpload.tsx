@@ -11,9 +11,17 @@ export default function ImageUpload({ onUpload }: { onUpload: (url: string) => v
 
     setUploading(true)
     const file = e.target.files[0]
-    const response = await put(file.name, file, { access: 'public' })
-    onUpload(response.url)
-    setUploading(false)
+    try {
+      const response = await put(file.name, file, {
+        access: 'public',
+        token: process.env.NEXT_PUBLIC_BLOB_READ_WRITE_TOKEN,
+      })
+      onUpload(response.url)
+    } catch (error) {
+      console.error('Error uploading file:', error)
+    } finally {
+      setUploading(false)
+    }
   }
 
   return (

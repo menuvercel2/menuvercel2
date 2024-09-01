@@ -8,18 +8,26 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const { name, image } = await request.json()
-  const { rows } = await sql`INSERT INTO sections (name, image) VALUES (${name}, ${image}) RETURNING *`
-  return NextResponse.json(rows[0])
-}
-
-export async function PUT(request: Request) {
-  const { id, name, image } = await request.json()
-  const { rows } = await sql`UPDATE sections SET name = ${name}, image = ${image} WHERE id = ${id} RETURNING *`
-  return NextResponse.json(rows[0])
+  try {
+    const { rows } = await sql`
+      INSERT INTO sections (name, image)
+      VALUES (${name}, ${image})
+      RETURNING *
+    `
+    return NextResponse.json(rows[0])
+  } catch (error) {
+    console.error('Error creating section:', error)
+    return NextResponse.json({ error: 'Failed to create section' }, { status: 500 })
+  }
 }
 
 export async function DELETE(request: Request) {
   const { id } = await request.json()
-  await sql`DELETE FROM sections WHERE id = ${id}`
-  return NextResponse.json({ message: 'Section deleted successfully' })
+  try {
+    await sql`DELETE FROM sections WHERE id = ${id}`
+    return NextResponse.json({ message: 'Section deleted successfully' })
+  } catch (error) {
+    console.error('Error deleting section:', error)
+    return NextResponse.json({ error: 'Failed to delete section' }, { status: 500 })
+  }
 }
