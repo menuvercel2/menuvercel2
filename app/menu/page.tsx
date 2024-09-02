@@ -1,3 +1,4 @@
+import { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import { sql } from '@vercel/postgres'
 import SectionCard from '../components/SectionCard'
@@ -8,9 +9,11 @@ interface Section {
   image: string
 }
 
-export default async function MenuPage() {
-  const { rows: sections } = await sql<Section>`SELECT * FROM sections`
+interface MenuPageProps {
+  sections: Section[]
+}
 
+export default function MenuPage({ sections }: MenuPageProps) {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Restaurant Menu</h1>
@@ -27,4 +30,14 @@ export default async function MenuPage() {
       )}
     </div>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  const { rows: sections } = await sql<Section>`SELECT * FROM sections`
+  
+  return {
+    props: {
+      sections,
+    },
+  }
 }
