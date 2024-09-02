@@ -38,9 +38,13 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
       notFound()
     }
 
-    const { rows: items } = await sql<Item>`SELECT * FROM items WHERE section_id = ${sectionId}`
-    const { rows: sections } = await sql<Section>`SELECT * FROM sections WHERE id = ${sectionId}`
+    // Separar las consultas para facilitar la depuración
+    const itemsResult = await sql<Item>`SELECT * FROM items WHERE section_id = ${sectionId}`
+    const sectionsResult = await sql<Section>`SELECT * FROM sections WHERE id = ${sectionId}`
     
+    const items = itemsResult.rows
+    const sections = sectionsResult.rows
+
     if (sections.length === 0) {
       notFound()
     }
@@ -48,6 +52,7 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
     const section = sections[0]
 
     console.log(`Fetched ${items.length} items for section ${section.name} (Admin view)`)
+    console.log('Items:', JSON.stringify(items, null, 2))
 
     return (
       <div className="container mx-auto px-4 py-8">
@@ -84,6 +89,18 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
     )
   } catch (error) {
     console.error('Error al obtener datos de la sección:', error)
-    throw error
+    // En lugar de lanzar el error, mostramos un mensaje de error al usuario
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6 text-red-600">Error</h1>
+        <p>Lo sentimos, ha ocurrido un error al cargar los datos de la sección. Por favor, intenta de nuevo más tarde.</p>
+        <Link 
+          href="/admin"
+          className="mt-4 inline-block px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+        >
+          Volver a Secciones
+        </Link>
+      </div>
+    )
   }
 }
