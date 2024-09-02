@@ -29,9 +29,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const { name, price, description, image, sectionId } = await request.json()
+    const numericPrice = parseFloat(price)
+    if (isNaN(numericPrice)) {
+      return NextResponse.json({ error: 'Invalid price' }, { status: 400 })
+    }
     const { rows } = await sql`
       INSERT INTO items (name, price, description, image, section_id)
-      VALUES (${name}, ${parseFloat(price)}, ${description}, ${image}, ${parseInt(sectionId, 10)})
+      VALUES (${name}, ${numericPrice}, ${description}, ${image}, ${parseInt(sectionId, 10)})
       RETURNING *
     `
     console.log(`Created new item: ${JSON.stringify(rows[0])}`)

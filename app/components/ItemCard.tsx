@@ -2,11 +2,13 @@ import Image from 'next/image'
 
 interface ItemCardProps {
   name: string
-  price: number
+  price: number | string
   image: string
 }
 
 export default function ItemCard({ name, price, image }: ItemCardProps) {
+  const formattedPrice = typeof price === 'number' ? price.toFixed(2) : parseFloat(price).toFixed(2)
+
   return (
     <div className="bg-white shadow-md rounded-lg overflow-hidden flex">
       <div className="relative h-24 w-24 flex-shrink-0">
@@ -25,7 +27,7 @@ export default function ItemCard({ name, price, image }: ItemCardProps) {
       </div>
       <div className="p-4 flex-grow">
         <h3 className="text-lg font-semibold">{name}</h3>
-        <p className="text-gray-600">${price.toFixed(2)}</p>
+        <p className="text-gray-600">${formattedPrice}</p>
       </div>
     </div>
   )
