@@ -25,23 +25,22 @@ export default function AdminItemCard({ item, sectionId }: AdminItemCardProps) {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const response = await fetch('/api/items', {
+      const response = await fetch(`/api/items/${item.id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: item.id }),
       })
 
       if (response.ok) {
         router.refresh()
       } else {
-        console.error('Failed to delete item')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete item')
       }
     } catch (error) {
       console.error('Error deleting item:', error)
+      alert('Failed to delete item. Please try again.')
+    } finally {
+      setIsDeleting(false)
     }
-    setIsDeleting(false)
   }
 
   return (
@@ -51,14 +50,15 @@ export default function AdminItemCard({ item, sectionId }: AdminItemCardProps) {
           <Image
             src={item.image}
             alt={item.name}
-            layout="fill"
-            objectFit="cover"
+            fill
+            style={{ objectFit: 'cover' }}
             className="rounded"
           />
         </div>
         <div>
           <h3 className="text-lg font-semibold">{item.name}</h3>
           <p className="text-gray-600">${item.price.toFixed(2)}</p>
+          <p className="text-sm text-gray-500">{item.description}</p>
         </div>
       </div>
       <div className="space-x-2">

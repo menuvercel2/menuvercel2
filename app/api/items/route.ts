@@ -1,46 +1,62 @@
 import { sql } from '@vercel/postgres'
 import { NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 
-export const revalidate = 0; // This ensures the API route is not cached
+export const revalidate = 0 // This ensures the API route is not cached
 
-export async function GET() {
-  console.log('GET request received for sections')
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const sectionId = searchParams.get('sectionId')
+
   try {
-    const { rows } = await sql`SELECT * FROM sections`
-    console.log('Fetched sections:', rows)
+    let query = 'SELECT * FROM items'
+    let params: any[] = []
+
+    if (sectionId) {
+      query += ' WHERE section_id = $1'
+      params.push(sectionId)
+    }
+
+    const { rows } = await sql.query(query, params)
     return NextResponse.json(rows)
   } catch (error) {
-    console.error('Error fetching sections:', error)
-    return NextResponse.json({ error: 'Failed to fetch sections' }, { status: 500 })
+    console.error('Error fetching items:', error)
+    return NextResponse.json({ error: 'Failed to fetch items' }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
-  console.log('POST request received for sections')
-  const { name, image } = await request.json()
   try {
+    const { name, price, description, image, sectionId } = await request.json()
     const { rows } = await sql`
-      INSERT INTO sections (name, image)
-      VALUES (${name}, ${image})
+      INSERT INTO items (name, price, description, image, section_id)
+      VALUES (${name}, ${price}, ${description}, ${image}, ${sectionId})
       RETURNING *
     `
-    console.log('Created new section:', rows[0])
+    revalidatePath('/admin')
+    revalidatePath('/')
     return NextResponse.json(rows[0])
   } catch (error) {
-    console.error('Error creating section:', error)
-    return NextResponse.json({ error: 'Failed to create section' }, { status: 500 })
+    console.error('Error creating item:', error)
+    return NextResponse.json({ error: 'Failed to create item' }, { status: 500 })
   }
 }
 
 export async function DELETE(request: Request) {
-  console.log('DELETE request received for sections')
-  const { id } = await request.json()
   try {
-    await sql`DELETE FROM sections WHERE id = ${id}`
-    console.log('Deleted section with id:', id)
-    return NextResponse.json({ message: 'Section deleted successfully' })
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    
+    if (!id) {
+      return NextResponse.json({ error: 'Item ID is required' }, { status: 400 })
+    }
+
+    await sql`DELETE FROM items WHERE id = ${id}`
+    revalidatePath('/admin')
+    revalidatePath('/')
+    return NextResponse.json({ message: 'Item deleted successfully' })
   } catch (error) {
-    console.error('Error deleting section:', error)
-    return NextResponse.json({ error: 'Failed to delete section' }, { status: 500 })
+    console.error('Error deleting item:', error)
+    return NextResponse.json({ error: 'Failed to delete item' }, { status: 500 })
   }
 }
