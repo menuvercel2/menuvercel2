@@ -13,8 +13,8 @@ export default function ItemCard({ name, price, image }: ItemCardProps) {
         <Image
           src={image}
           alt={name}
-          layout="fill"
-          objectFit="cover"
+          fill
+          style={{ objectFit: 'cover' }}
         />
       </div>
       <div className="p-4 flex-grow">

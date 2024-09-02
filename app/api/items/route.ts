@@ -18,6 +18,7 @@ export async function GET(request: Request) {
     }
 
     const { rows } = await sql.query(query, params)
+    console.log(`Fetched ${rows.length} items${sectionId ? ` for section ${sectionId}` : ''}`)
     return NextResponse.json(rows)
   } catch (error) {
     console.error('Error fetching items:', error)
@@ -33,8 +34,10 @@ export async function POST(request: Request) {
       VALUES (${name}, ${price}, ${description}, ${image}, ${sectionId})
       RETURNING *
     `
+    console.log(`Created new item: ${JSON.stringify(rows[0])}`)
     revalidatePath('/admin')
     revalidatePath('/')
+    revalidatePath(`/menu/${sectionId}`)
     return NextResponse.json(rows[0])
   } catch (error) {
     console.error('Error creating item:', error)
@@ -51,9 +54,13 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: 'Item ID is required' }, { status: 400 })
     }
 
-    await sql`DELETE FROM items WHERE id = ${id}`
+    const { rows } = await sql`DELETE FROM items WHERE id = ${id} RETURNING section_id`
+    console.log(`Deleted item with id: ${id}`)
     revalidatePath('/admin')
     revalidatePath('/')
+    if (rows.length > 0) {
+      revalidatePath(`/menu/${rows[0].section_id}`)
+    }
     return NextResponse.json({ message: 'Item deleted successfully' })
   } catch (error) {
     console.error('Error deleting item:', error)
