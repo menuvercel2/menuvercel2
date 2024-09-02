@@ -13,6 +13,8 @@ async function getSections() {
   return rows
 }
 
+export const revalidate = 0 // This will revalidate the page on every request
+
 export default async function AdminPage() {
   const sections = await getSections()
 

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { sql } from '@vercel/postgres'
-import SectionCard from '../components/SectionCard'
+import SectionCard from '../../components/SectionCard'
 
 interface Section {
   id: number
@@ -12,6 +12,8 @@ async function getSections() {
   const { rows } = await sql<Section>`SELECT * FROM sections`
   return rows
 }
+
+export const revalidate = 0 // This will revalidate the page on every request
 
 export default async function MenuPage() {
   const sections = await getSections()
