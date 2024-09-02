@@ -1,8 +1,9 @@
 'use client'
 
-import Link from 'next/link'
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 interface Section {
   id: number
@@ -21,39 +22,54 @@ export default function AdminSectionCard({ section }: AdminSectionCardProps) {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const response = await fetch('/api/sections', {
+      const response = await fetch(`/api/sections/${section.id}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: section.id }),
       })
 
       if (response.ok) {
+        alert(`${section.name} has been successfully deleted.`)
         router.refresh()
       } else {
-        console.error('Failed to delete section')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to delete section')
       }
     } catch (error) {
       console.error('Error deleting section:', error)
+      alert(`Failed to delete ${section.name}. Please try again.`)
+    } finally {
+      setIsDeleting(false)
     }
-    setIsDeleting(false)
   }
 
   return (
     <div className="bg-white shadow-md rounded-lg p-4 flex justify-between items-center">
-      <h2 className="text-lg font-semibold">{section.name}</h2>
-      <div className="space-x-2">
-        <Link href={`/admin/${section.id}`} className="bg-blue-500 text-white px-3 py-1 rounded">
+      <div className="flex items-center space-x-4">
+        <Image 
+          src={section.image} 
+          alt={section.name} 
+          width={48} 
+          height={48} 
+          className="rounded-full object-cover"
+        />
+        <h2 className="text-lg font-semibold">{section.name}</h2>
+      </div>
+      <div className="flex space-x-2">
+        <Link 
+          href={`/admin/${section.id}`}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+        >
           Enter
         </Link>
-        <Link href={`/admin/edit-section/${section.id}`} className="bg-yellow-500 text-white px-3 py-1 rounded">
+        <Link 
+          href={`/admin/edit-section/${section.id}`}
+          className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm"
+        >
           Edit
         </Link>
         <button
           onClick={handleDelete}
           disabled={isDeleting}
-          className="bg-red-500 text-white px-3 py-1 rounded disabled:opacity-50"
+          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50"
         >
           {isDeleting ? 'Deleting...' : 'Delete'}
         </button>
