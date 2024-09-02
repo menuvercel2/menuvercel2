@@ -1,77 +1,61 @@
-'use client'
-
-import Link from 'next/link'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import React from 'react'
 import Image from 'next/image'
-
-interface Item {
-  id: number
-  name: string
-  price: number
-  image: string
-  description: string
-}
+import Link from 'next/link'
 
 interface AdminItemCardProps {
-  item: Item
+  item: {
+    id: number
+    name: string
+    price: number | string
+    image: string
+    description: string
+  }
   sectionId: number
+  onDelete: (id: number) => void
 }
 
-export default function AdminItemCard({ item, sectionId }: AdminItemCardProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
-  const router = useRouter()
-
-  const handleDelete = async () => {
-    setIsDeleting(true)
-    try {
-      const response = await fetch(`/api/items/${item.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        router.refresh()
-      } else {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to delete item')
-      }
-    } catch (error) {
-      console.error('Error deleting item:', error)
-      alert('Failed to delete item. Please try again.')
-    } finally {
-      setIsDeleting(false)
-    }
-  }
+export default function AdminItemCard({ item, sectionId, onDelete }: AdminItemCardProps) {
+  const formattedPrice = typeof item.price === 'number' 
+    ? item.price.toFixed(2) 
+    : parseFloat(item.price).toFixed(2)
 
   return (
-    <div className="bg-white shadow-md rounded-lg p-4 flex justify-between items-center">
-      <div className="flex items-center">
-        <div className="relative h-16 w-16 mr-4">
+    <div className="bg-white shadow-md rounded-lg overflow-hidden flex">
+      <div className="relative h-24 w-24 flex-shrink-0">
+        {item.image ? (
           <Image
             src={item.image}
             alt={item.name}
-            fill
+            width={96}
+            height={96}
             style={{ objectFit: 'cover' }}
-            className="rounded"
           />
-        </div>
+        ) : (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-500">Sin Imagen</span>
+          </div>
+        )}
+      </div>
+      <div className="p-4 flex-grow flex justify-between items-center">
         <div>
           <h3 className="text-lg font-semibold">{item.name}</h3>
-          <p className="text-gray-600">${item.price.toFixed(2)}</p>
+          <p className="text-gray-600">${formattedPrice}</p>
           <p className="text-sm text-gray-500">{item.description}</p>
         </div>
-      </div>
-      <div className="space-x-2">
-        <Link href={`/admin/${sectionId}/edit-item/${item.id}`} className="bg-yellow-500 text-white px-3 py-1 rounded">
-          Edit
-        </Link>
-        <button
-          onClick={handleDelete}
-          disabled={isDeleting}
-          className="bg-red-500 text-white px-3 py-1 rounded disabled:opacity-50"
-        >
-          {isDeleting ? 'Deleting...' : 'Delete'}
-        </button>
+        <div className="flex space-x-2">
+          <Link 
+            href={`/admin/${sectionId}/edit-item/${item.id}`}
+            className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
+            Editar
+          </Link>
+          <button 
+            onClick={() => onDelete(item.id)}
+            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+          >
+            Eliminar
+          </button>
+        </div>
       </div>
     </div>
   )
