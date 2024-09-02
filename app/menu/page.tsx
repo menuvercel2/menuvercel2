@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { sql } from '@vercel/postgres'
-import SectionCard from '../../components/SectionCard'
+import SectionCard from '../components/SectionCard'
 
 interface Section {
   id: number
