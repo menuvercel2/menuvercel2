@@ -1,4 +1,3 @@
-import { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import { sql } from '@vercel/postgres'
 import AdminSectionCard from '../components/AdminSectionCard'
@@ -9,11 +8,14 @@ interface Section {
   image: string
 }
 
-interface AdminPageProps {
-  sections: Section[]
+async function getSections() {
+  const { rows } = await sql<Section>`SELECT * FROM sections`
+  return rows
 }
 
-export default function AdminPage({ sections }: AdminPageProps) {
+export default async function AdminPage() {
+  const sections = await getSections()
+
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">PANEL DE ADMINISTRACIÓN</h1>
@@ -31,14 +33,4 @@ export default function AdminPage({ sections }: AdminPageProps) {
       </Link>
     </div>
   )
-}
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const { rows: sections } = await sql<Section>`SELECT * FROM sections`
-  
-  return {
-    props: {
-      sections,
-    },
-  }
 }
