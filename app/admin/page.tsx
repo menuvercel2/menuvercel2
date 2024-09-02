@@ -13,9 +13,9 @@ export default async function AdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Admin Panel</h1>
+      <h1 className="text-2xl font-bold mb-6">PANEL DE ADMINISTRACIÓN</h1>
       {sections.length === 0 ? (
-        <p>No sections found. Add a new section to get started.</p>
+        <p>No hay secciones, añada una.</p>
       ) : (
         <div className="space-y-4">
           {sections.map((section) => (
@@ -24,7 +24,7 @@ export default async function AdminPage() {
         </div>
       )}
       <Link href="/admin/new-section" className="mt-6 inline-block bg-green-500 text-white px-4 py-2 rounded">
-        Add New Section
+        Añadir nueva sección
       </Link>
     </div>
   )
