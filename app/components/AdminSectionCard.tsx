@@ -22,12 +22,13 @@ export default function AdminSectionCard({ section }: AdminSectionCardProps) {
   const handleDelete = async () => {
     setIsDeleting(true)
     try {
-      const response = await fetch(`/api/sections/${section.id}`, {
+      const response = await fetch(`/api/sections?id=${section.id}`, {
         method: 'DELETE',
       })
-
+  
       if (response.ok) {
-        alert(`${section.name} has been successfully deleted.`)
+        const data = await response.json()
+        alert(data.message || `${section.name} has been successfully deleted.`)
         router.refresh()
       } else {
         const errorData = await response.json()
