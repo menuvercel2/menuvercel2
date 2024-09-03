@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 interface Item {
   id: number
   name: string
-  price: number | string
+  price: number
   image: string
   description: string
 }
@@ -71,21 +71,16 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
   console.log('Muestra de items en la base de datos:', sampleItems)
 
   try {
-    const sectionId = parseInt(params.sectionId, 10)
-    if (isNaN(sectionId)) {
-      console.error(`ID de sección inválido: ${params.sectionId}`)
-      notFound()
-    }
-
+    const sectionId = params.sectionId
     console.log(`Intentando obtener items para la sección ID: ${sectionId}`)
 
     // Consulta de items
     const itemsResult = await sql<Item>`
-      SELECT id, name, price, image, description 
+      SELECT id, name, CAST(price AS FLOAT) as price, image, description 
       FROM items 
       WHERE section_id = ${sectionId}
     `
-    console.log(`Query SQL ejecutada: SELECT id, name, price, image, description FROM items WHERE section_id = ${sectionId}`)
+    console.log(`Query SQL ejecutada: SELECT id, name, CAST(price AS FLOAT) as price, image, description FROM items WHERE section_id = ${sectionId}`)
     console.log('Resultado de la consulta de items:', itemsResult)
 
     // Consulta de sección
@@ -97,7 +92,10 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
     console.log(`Query SQL ejecutada: SELECT id, name FROM sections WHERE id = ${sectionId}`)
     console.log('Resultado de la consulta de sección:', sectionsResult)
     
-    const items = itemsResult.rows
+    const items = itemsResult.rows.map(item => ({
+      ...item,
+      price: parseFloat(item.price as unknown as string)
+    }))
     const sections = sectionsResult.rows
 
     if (sections.length === 0) {
@@ -121,7 +119,7 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
               <AdminItemCard 
                 key={item.id} 
                 item={item} 
-                sectionId={sectionId} 
+                sectionId={parseInt(sectionId)} 
                 onDelete={deleteItem}
               />
             ))}
