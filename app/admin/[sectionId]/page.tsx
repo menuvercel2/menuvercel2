@@ -19,6 +19,28 @@ interface Section {
 
 export const revalidate = 0
 
+async function testDatabaseConnection() {
+  try {
+    const result = await sql`SELECT 1 as test`
+    console.log('Conexión a la base de datos exitosa:', result)
+    return true
+  } catch (error) {
+    console.error('Error de conexión a la base de datos:', error)
+    return false
+  }
+}
+
+async function getAllItems() {
+  try {
+    const result = await sql`SELECT * FROM items LIMIT 10`
+    console.log('Items obtenidos (muestra):', result.rows)
+    return result.rows
+  } catch (error) {
+    console.error('Error al obtener items:', error)
+    return []
+  }
+}
+
 export default async function AdminSectionPage({ params }: { params: { sectionId: string } }) {
   const deleteItem = async (id: number) => {
     'use server'
@@ -33,6 +55,21 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
     }
   }
 
+  // Verificar la conexión a la base de datos
+  const isConnected = await testDatabaseConnection()
+  if (!isConnected) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold mb-6 text-red-600">Error de Conexión</h1>
+        <p>No se pudo conectar a la base de datos. Por favor, verifica la configuración y vuelve a intentarlo.</p>
+      </div>
+    )
+  }
+
+  // Obtener una muestra de items para verificar
+  const sampleItems = await getAllItems()
+  console.log('Muestra de items en la base de datos:', sampleItems)
+
   try {
     const sectionId = parseInt(params.sectionId, 10)
     if (isNaN(sectionId)) {
@@ -42,20 +79,23 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
 
     console.log(`Intentando obtener items para la sección ID: ${sectionId}`)
 
-    // Separar las consultas para facilitar la depuración
+    // Consulta de items
     const itemsResult = await sql<Item>`
       SELECT id, name, price, image, description 
       FROM items 
       WHERE section_id = ${sectionId}
     `
-    console.log(`Consulta de items completada. Filas obtenidas: ${itemsResult.rowCount}`)
+    console.log(`Query SQL ejecutada: SELECT id, name, price, image, description FROM items WHERE section_id = ${sectionId}`)
+    console.log('Resultado de la consulta de items:', itemsResult)
 
+    // Consulta de sección
     const sectionsResult = await sql<Section>`
       SELECT id, name 
       FROM sections 
       WHERE id = ${sectionId}
     `
-    console.log(`Consulta de sección completada. Filas obtenidas: ${sectionsResult.rowCount}`)
+    console.log(`Query SQL ejecutada: SELECT id, name FROM sections WHERE id = ${sectionId}`)
+    console.log('Resultado de la consulta de sección:', sectionsResult)
     
     const items = itemsResult.rows
     const sections = sectionsResult.rows
@@ -104,9 +144,14 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
       </div>
     )
   } catch (error) {
-    console.error('Error detallado al obtener datos de la sección:', error)
+    console.error('Error detallado:', error)
     console.error('Stack trace:', (error as Error).stack)
-    // En lugar de lanzar el error, mostramos un mensaje de error al usuario
+    console.error('Error digest:', '1036038948')
+
+    if ((error as any).code) {
+      console.error('Código de error SQL:', (error as any).code)
+    }
+
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6 text-red-600">Error</h1>
