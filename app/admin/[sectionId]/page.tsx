@@ -29,29 +29,45 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
       revalidatePath(`/menu/${params.sectionId}`)
     } catch (error) {
       console.error('Error al eliminar el ítem:', error)
+      throw new Error('No se pudo eliminar el ítem. Por favor, intente de nuevo.')
     }
   }
 
   try {
     const sectionId = parseInt(params.sectionId, 10)
     if (isNaN(sectionId)) {
+      console.error(`ID de sección inválido: ${params.sectionId}`)
       notFound()
     }
 
+    console.log(`Intentando obtener items para la sección ID: ${sectionId}`)
+
     // Separar las consultas para facilitar la depuración
-    const itemsResult = await sql<Item>`SELECT * FROM items WHERE section_id = ${sectionId}`
-    const sectionsResult = await sql<Section>`SELECT * FROM sections WHERE id = ${sectionId}`
+    const itemsResult = await sql<Item>`
+      SELECT id, name, price, image, description 
+      FROM items 
+      WHERE section_id = ${sectionId}
+    `
+    console.log(`Consulta de items completada. Filas obtenidas: ${itemsResult.rowCount}`)
+
+    const sectionsResult = await sql<Section>`
+      SELECT id, name 
+      FROM sections 
+      WHERE id = ${sectionId}
+    `
+    console.log(`Consulta de sección completada. Filas obtenidas: ${sectionsResult.rowCount}`)
     
     const items = itemsResult.rows
     const sections = sectionsResult.rows
 
     if (sections.length === 0) {
+      console.error(`No se encontró la sección con ID: ${sectionId}`)
       notFound()
     }
 
     const section = sections[0]
 
-    console.log(`Fetched ${items.length} items for section ${section.name} (Admin view)`)
+    console.log(`Sección "${section.name}" (ID: ${section.id}) encontrada con ${items.length} items`)
     console.log('Items:', JSON.stringify(items, null, 2))
 
     return (
@@ -88,12 +104,14 @@ export default async function AdminSectionPage({ params }: { params: { sectionId
       </div>
     )
   } catch (error) {
-    console.error('Error al obtener datos de la sección:', error)
+    console.error('Error detallado al obtener datos de la sección:', error)
+    console.error('Stack trace:', (error as Error).stack)
     // En lugar de lanzar el error, mostramos un mensaje de error al usuario
     return (
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-6 text-red-600">Error</h1>
         <p>Lo sentimos, ha ocurrido un error al cargar los datos de la sección. Por favor, intenta de nuevo más tarde.</p>
+        <p className="text-sm text-gray-600 mt-2">Error: {(error as Error).message}</p>
         <Link 
           href="/admin"
           className="mt-4 inline-block px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
